@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Voting System - Verification</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
+    <style>
+        body, html {font-family: "Raleway", sans-serif; height: 100%; padding-left: 0.5%;}
+        label {
+          display: inline-block;
+          font-family: sans-serif, Arial;
+          font-size: 16px;
+          border: 2px solid #444;
+          border-radius: 4px;
+          padding: 1% 1% 1% 1%;
+          width: 20%;
+        }
+        input[type="submit"], button {
+          background-color: #4CAF50;
+          border: none;
+          color: white;
+          padding: 15px 32px;
+          text-align: center;
+          text-decoration: none;
+          display: inline-block;
+          font-size: 16px;
+          margin: 4px 2px;
+          cursor: pointer;
+        }
+        input[type="submit"]:hover, button:hover {
+          box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24), 0 17px 50px 0 rgba(0,0,0,0.19);
+        }
+        #video {
+          width: 320px;
+          height: 240px;
+          border: 2px solid black;
+        }
+        #canvas {
+          display: none;
+        }
+        #capturedImage {
+          width: 320px;
+          height: 240px;
+          border: 2px solid black;
+          display: none;
+        }
+    </style>
+  </head>
+  <body>
+    <p><span style='font-size: 300%'>Voting System (Verification Page)</span></p><br>
+
+    <form id="verificationForm">
+      Enter your ID (Aadhaar):
+      <input name="aid" id="aid" type="text" required><br><br>
+
+      <div>
+        <video id="video" autoplay></video><br>
+        <button type="button" id="captureBtn">Capture Face</button><br><br>
+        <canvas id="canvas"></canvas>
+        <img id="capturedImage" alt="Captured Face"><br><br>
+      </div>
+
+      <input id="verifyBtn" type="submit" value="VERIFY" disabled>
+    </form>
+
+    <script>
+      const video = document.getElementById('video');
+      const capturedImageElem = document.getElementById('capturedImage');
+
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => video.srcObject = stream)
+        .catch(err => console.error("Error accessing webcam:", err));
+
+      document.getElementById('captureBtn').addEventListener('click', function() {
+        let canvas = document.getElementById('canvas');
+        let context = canvas.getContext('2d');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        let capturedImage = canvas.toDataURL('image/png');
+        let aadhaarID = document.getElementById('aid').value;
+
+        if (!aadhaarID) {
+          alert("Please enter Aadhaar ID before capturing.");
+          return;
+        }
+
+        // Show the captured image
+        capturedImageElem.src = capturedImage;
+        capturedImageElem.style.display = "block";
+
+        // Store Image in Backend
+        fetch('http://127.0.0.1:80/store_image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ aadhaarID: aadhaarID, image: capturedImage })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === "success") {
+            alert("Face captured and stored successfully!");
+            document.getElementById('verifyBtn').disabled = false;
+            sessionStorage.setItem("capturedImage", capturedImage);
+          } else {
+            alert("Error storing face: " + data.message);
+          }
+        })
+        .catch(error => console.error('Error:', error));
+      });
+
+      document.getElementById('verificationForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        let aadhaarID = document.getElementById('aid').value;
+        let capturedImage = sessionStorage.getItem("capturedImage");
+
+        if (!capturedImage || !aadhaarID) {
+          alert("Please capture your face before verification.");
+          return;
+        }
+
+        // Verify Image
+        fetch('/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ aadhaarID: aadhaarID, image: capturedImage })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === "success") {
+            alert("Verification Successful! You may proceed.");
+            window.location.href = "/vote";
+          } else {
+            alert("Access Denied! Face does not match.");
+          }
+        })
+        .catch(error => console.error('Error:', error));
+      });
+    </script>
+  </body>
+</html>

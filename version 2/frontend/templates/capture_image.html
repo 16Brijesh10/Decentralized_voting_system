@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Capture</title>
+</head>
+<body>
+    <h2>Capture Your Face</h2>
+    <video id="video" width="320" height="240" autoplay></video>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <br>
+    <input type="text" id="aadhaarID" placeholder="Enter Aadhaar ID">
+    <button id="capture">Capture</button>
+    <button id="submit">Submit</button>
+    <p id="message"></p>
+
+    <script>
+        const video = document.getElementById("video");
+        const canvas = document.getElementById("canvas");
+        const captureButton = document.getElementById("capture");
+        const submitButton = document.getElementById("submit");
+        const message = document.getElementById("message");
+
+        // Access webcam
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => video.srcObject = stream)
+            .catch(error => console.error("Error accessing camera:", error));
+
+        let capturedImage = "";
+
+        // Capture image
+        captureButton.addEventListener("click", () => {
+            const context = canvas.getContext("2d");
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            capturedImage = canvas.toDataURL("image/png");  // Convert image to Base64
+            message.textContent = "Image captured!";
+        });
+
+        // Submit image to backend
+        submitButton.addEventListener("click", async () => {
+            const aadhaarID = document.getElementById("aadhaarID").value;
+            if (!aadhaarID || !capturedImage) {
+                message.textContent = "Please enter Aadhaar ID and capture an image!";
+                return;
+            }
+
+            const response = await fetch("/store_image", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ aadhaarID, image: capturedImage })
+            });
+
+            const result = await response.json();
+            message.textContent = result.message;
+        });
+    </script>
+</body>
+</html>
