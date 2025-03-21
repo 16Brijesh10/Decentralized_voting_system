@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Verification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        video {
+            width: 50%;
+            border: 2px solid black;
+        }
+        canvas {
+            display: none;
+        }
+        button {
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #result {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        #proceedButton {
+            display: none;
+            background-color: green;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Face Verification</h1>
+
+    <label for="aadhaarID">Enter Aadhaar ID:</label>
+    <input type="text" id="aadhaarID" placeholder="Enter Aadhaar ID">
+
+    <br><br>
+
+    <video id="video" autoplay></video>
+    <canvas id="canvas"></canvas>
+
+    <br>
+    <button onclick="captureImage()">Capture Image</button>
+    <button onclick="verifyFace()">Verify Face</button>
+
+    <p id="result"></p>
+
+    <button id="proceedButton" onclick="window.location.href='/vote'">Proceed to Vote</button>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+        const proceedButton = document.getElementById("proceedButton");
+
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(error => {
+                console.error("Error accessing webcam:", error);
+            });
+
+        let capturedImage = null;
+
+        function captureImage() {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            capturedImage = canvas.toDataURL('image/jpeg');
+            alert("Image captured successfully!");
+        }
+
+        function verifyFace() {
+            const aadhaarID = document.getElementById("aadhaarID").value;
+
+            if (!aadhaarID) {
+                alert("Please enter Aadhaar ID!");
+                return;
+            }
+            if (!capturedImage) {
+                alert("Please capture an image first!");
+                return;
+            }
+
+            fetch('/verify', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    aadhaarID: aadhaarID,
+                    image: capturedImage
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("result").innerText = data.message;
+                document.getElementById("result").style.color = data.status === "success" ? "green" : "red";
+
+                if (data.status === "success") {
+                    proceedButton.style.display = "inline-block";  // Show "Proceed to Vote" button
+                    setTimeout(() => {
+                        window.location.href = data.redirect;
+                    }, 1000);  // Auto redirect after 1 second
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                document.getElementById("result").innerText = "Verification failed!";
+                document.getElementById("result").style.color = "red";
+            });
+        }
+    </script>
+
+</body>
+</html>

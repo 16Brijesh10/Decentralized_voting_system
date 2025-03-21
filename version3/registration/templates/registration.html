@@ -1,0 +1,75 @@
+<form id="registrationForm">
+    <label>Enter Aadhaar ID:</label>
+    <input name="aid" id="aid" type="text" required><br><br>
+
+    <label>Enter Date of Birth:</label>
+    <input name="dob" id="dob" type="date" required><br><br>
+
+    <div>
+        <video id="video" autoplay></video><br>
+        <button type="button" id="captureBtn">Capture Face</button><br><br>
+        <canvas id="canvas"></canvas>
+        <img id="capturedImage" alt="Captured Face"><br><br>
+    </div>
+
+    <input id="registerBtn" type="submit" value="Register Voter" disabled>
+</form>
+
+<script>
+    const video = document.getElementById('video');
+    const capturedImageElem = document.getElementById('capturedImage');
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => video.srcObject = stream)
+        .catch(err => console.error("Error accessing webcam:", err));
+
+    document.getElementById('captureBtn').addEventListener('click', function() {
+        let canvas = document.getElementById('canvas');
+        let context = canvas.getContext('2d');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        let capturedImage = canvas.toDataURL('image/png');
+        let aadhaarID = document.getElementById('aid').value;
+        let dob = document.getElementById('dob').value;
+
+        if (!aadhaarID || !dob) {
+            alert("Please enter Aadhaar ID and Date of Birth before capturing.");
+            return;
+        }
+
+        capturedImageElem.src = capturedImage;
+        capturedImageElem.style.display = "block";
+
+        document.getElementById('registerBtn').disabled = false;
+        sessionStorage.setItem("capturedImage", capturedImage);
+    });
+
+    document.getElementById('registrationForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        let aadhaarID = document.getElementById('aid').value;
+        let dob = document.getElementById('dob').value;
+        let capturedImage = sessionStorage.getItem("capturedImage");
+
+        if (!capturedImage || !aadhaarID || !dob) {
+            alert("Please fill all fields and capture your face before registering.");
+            return;
+        }
+
+        fetch('/register_voter', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ aid: aadhaarID, dob: dob, image: capturedImage })
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);
+            if (data.status === "success") {
+                window.location.href = "/verify";
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    });
+</script>
