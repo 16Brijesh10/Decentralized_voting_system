@@ -7,18 +7,16 @@ A decentralized voting system where a user can walk into a government authorized
 **NOTE:** All diagrams are made by me and appropriate credits must be given before copying it.
 ## Key Advantages
 
- - **No VoterID required** as a user's validity (age: 18+) is determined dynamically using the Aadhaar API 
+ - **VoterID required** as a user's validity (age: 18+) 
  - **Secure vote** by Azure blockchain and biometric authentication (using pre-existing Aadhaar database)
  - **Reduced cost** during election process
  - **Shorter wait times** as it is decentralized
  - A vote can be cast from **anywhere in the country**
- - **Highly scalable** design
  - **Efficient election system** in which the portal can be up for days together, in turn **increasing voter turnout**
- - Portal **front end** can provide useful information on the candidate and **can aid in their decision making** (display promises, proposals etc.)
 
 ## A Vote's Story
 
-A user will walk into a government authorized center and complete his/her biometric verification. Once the verification is complete the user will be taken to a web-based portal **(developed by me)** where he/she will be presented with the voting options. The portal then sends the information of the user's vote (encrypted) to backend **(developed by me)** where the data will be decrypted and the vote's transaction from the user to the candidate will take place using the Azure blockchain service. The candidate with the most votes is elected. During each election time the users are that are voted are logged which will make sure only one transaction can be made by the user during the whole election process.
+A user will walk into a government authorized center and complete his/her biometric verification. Once the verification is complete the user will be taken to a web-based portal **(developed by us)** where he/she will be presented with the voting options. The portal then sends the information of the user's vote (encrypted) to backend **(developed by me)** where the data will be decrypted and the vote's transaction from the user to the candidate will take place using the Azure blockchain service. The candidate with the most votes is elected. During each election time the users are that are voted are logged which will make sure only one transaction can be made by the user during the whole election process.
 
  
 ## Voting System Workflow
@@ -29,7 +27,7 @@ During the election time the admin will initiate the election. When the election
 
 
 ## Technologies
- - Aadhaar API service (for biometric authentication)
+ - Deep Face (for biometric authentication)
  - Python (to communicate with blockchain and for backend and frontend API calls) 
  - Truffle (provides tools to create and test smart contracts)
  - Ganache (to create private blockchain network for testing on localhost) 
